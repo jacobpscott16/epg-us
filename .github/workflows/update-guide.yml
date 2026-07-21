@@ -1,0 +1,33 @@
+name: update-guide
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  grab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - run: npm install
+
+      - name: grab EPG
+        run: npm run grab -- --channels=us-filtered.channels.xml --output=guide.xml
+
+      - name: commit and push guide.xml
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add guide.xml
+          git diff --staged --quiet || git commit -m "Update guide.xml"
+          git push
